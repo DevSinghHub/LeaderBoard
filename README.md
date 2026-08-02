@@ -12,6 +12,7 @@ A multi-module Android application built with **Jetpack Compose**, **Kotlin Coro
 - **Real-Time Visual Highlighting**: Automatically highlights player items for 1.5 seconds when their score or rank changes.
 - **Background Lifecycle Management**: When the app goes to the background (`ON_STOP`), top 20 calculation pauses while score generation continues in memory. Upon resuming (`ON_START`), latest scores sync and top 20 recalculates immediately.
 - **Dense Ranking with Tie-Breaking**: Players with equal scores share the same rank, and subsequent ranks skip accordingly (e.g., ranks: 1, 1, 3).
+- **Configuration Change Resilience**: Storing state and highlight tracking (`previousPlayers`, `highlightedIds`) in `LeaderBoardViewModel` ensures screen rotations do not re-trigger data loads or cause unnecessary UI re-draws.
 - **Decoupled Architecture**: Clean separation into independent, reusable modules (`gameengine`, `leaderboardengine`, and `app`).
 
 ---
@@ -66,7 +67,7 @@ LeaderBoard/
 
 ### 3. `:app`
 - **`MainActivity`**: Single-activity entry point configuring edge-to-edge layout and hosting Compose UI.
-- **`LeaderBoardViewModel`**: Connects `LeaderBoard` engine to Compose, managing highlight state snapshots (`previousPlayers`, `highlightedIds`).
+- **`LeaderBoardViewModel`**: Connects `LeaderBoard` engine to Compose, retaining state snapshots (`previousPlayers`, `highlightedIds`) across Activity orientation changes (screen rotations) without re-fetching data or triggering spurious UI re-draws.
 - **`LeaderBoardScreen` & `PlayerItem`**: Compose UI displaying the smooth, scrollable list with fade-in/fade-out highlight animations.
 
 ---
