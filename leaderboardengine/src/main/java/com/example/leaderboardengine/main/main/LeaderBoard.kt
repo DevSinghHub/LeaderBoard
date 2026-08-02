@@ -10,6 +10,7 @@ import dagger.Lazy
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import java.util.TreeMap
 import javax.inject.Inject
@@ -26,15 +27,17 @@ class LeaderBoard @Inject constructor(
     private val scoreMap = TreeMap<Int, MutableSet<Player>>(compareByDescending { it })
     private val playerScores = mutableMapOf<Int, Int>()
 
+    private var scoreListenerJob: Job? = null
+    private var isInitialized = false
+
     /**
      * Bootstraps the LeaderBoard engine by launching the score generator, loading initial players,
      * computing the initial Top 20 list, and listening for real-time score updates.
      */
     suspend fun initialize(scope: CoroutineScope){
+        if (isInitialized) return
         scoreGenerator.get().initializeScore(scope)
-        registerAllPlayers()
-        getTop20()
-        startPlayerScoreListener()
+        isInitialized = true
     }
 
     /**
@@ -90,12 +93,40 @@ class LeaderBoard @Inject constructor(
      * Listens for real-time player score updates emitted by [ScoreGenerator], updates internal
      * leaderboard state, and recalculates the top 20 rankings.
      */
-    private suspend fun startPlayerScoreListener() {
-        scoreGenerator.get().updatedPlayer.collect { updatedPlayer ->
-            updatedPlayer?.let {
-                updateScore(updatedPlayer)
-                getTop20()
+    fun startPlayerScoreListener(scope: CoroutineScope) {
+        scoreListenerJob?.cancel()
+        scoreListenerJob = scope.launch {
+            scoreGenerator.get().updatedPlayer.collect { updatedPlayer ->
+                updatedPlayer?.let {
+                    updateScore(updatedPlayer)
+                    getTop20()
+                }
             }
         }
+    }
+
+    /**
+     * Pauses leaderboard processing when the app enters the background.
+     * Cancels the live score listener job so top 20 is not calculated while in background.
+     */
+    fun pauseLeaderBoard() {
+        scoreListenerJob?.cancel()
+        scoreListenerJob = null
+    }
+
+    /**
+     * Resumes leaderboard processing when the app returns to the foreground.
+     * Clears stale local state, syncs the latest player scores from [ScoreGenerator],
+     * recalculates top 20, and restarts listening for live updates.
+     */
+    suspend fun resumeLeaderBoard(scope: CoroutineScope) {
+        if (!isInitialized) {
+            initialize(scope)
+        }
+        scoreMap.clear()
+        playerScores.clear()
+        registerAllPlayers()
+        getTop20()
+        startPlayerScoreListener(scope)
     }
 }

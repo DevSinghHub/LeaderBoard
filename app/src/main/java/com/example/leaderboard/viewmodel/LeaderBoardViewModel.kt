@@ -59,4 +59,22 @@ class LeaderBoardViewModel @Inject constructor(
     fun clearHighlight(playerId: Int) {
         highlightedIds.remove(playerId)
     }
+
+    /**
+     * Called when the app enters the background.
+     * Pauses top 20 calculation in the LeaderBoard engine while keeping score generator alive.
+     */
+    fun onAppPaused() {
+        leaderBoard.get().pauseLeaderBoard()
+    }
+
+    /**
+     * Called when the app returns to the foreground.
+     * Synchronizes latest player scores from ScoreGenerator, recalculates top 20, and resumes listening.
+     */
+    fun onAppResumed() {
+        viewModelScope.launch(Dispatchers.IO) {
+            leaderBoard.get().resumeLeaderBoard(this)
+        }
+    }
 }

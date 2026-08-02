@@ -10,6 +10,7 @@ A multi-module Android application built with **Jetpack Compose**, **Kotlin Coro
 - **Top 20 Leaderboard**: Dynamically maintains and displays the top 20 players based on total scores.
 - **Efficient Data Structures**: Uses `TreeMap` and `HashMap` in the engine to update player scores in $O(\log K)$ time and maintain dense rank ordering.
 - **Real-Time Visual Highlighting**: Automatically highlights player items for 1.5 seconds when their score or rank changes.
+- **Background Lifecycle Management**: When the app goes to the background (`ON_STOP`), top 20 calculation pauses while score generation continues in memory. Upon resuming (`ON_START`), latest scores sync and top 20 recalculates immediately.
 - **Dense Ranking with Tie-Breaking**: Players with equal scores share the same rank, and subsequent ranks skip accordingly (e.g., ranks: 1, 1, 3).
 - **Decoupled Architecture**: Clean separation into independent, reusable modules (`gameengine`, `leaderboardengine`, and `app`).
 

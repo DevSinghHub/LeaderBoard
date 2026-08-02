@@ -40,4 +40,14 @@ class MainActivity : ComponentActivity() {
             onHighlightExpired = { viewModel.clearHighlight(it) }
         )
     }
+
+    override fun onStart() {
+        super.onStart()
+        viewModel.onAppResumed()
+    }
+
+    override fun onStop() {
+        super.onStop()
+        viewModel.onAppPaused()
+    }
 }
