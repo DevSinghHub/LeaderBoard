@@ -21,6 +21,10 @@ class ScoreGenerator @Inject constructor(
     private val randomPointsRange: IntRange = 1..50
     private var allPlayers : MutableList<Player> = mutableListOf()
 
+    /**
+     * Initializes the score generator by loading players from the JSON resource
+     * and starting the random background score generation task.
+     */
     fun initializeScore(scope: CoroutineScope){
         allPlayers = getPlayers().toMutableList()
         scope.launch {
@@ -28,11 +32,16 @@ class ScoreGenerator @Inject constructor(
         }
     }
 
+    /**
+     * Returns the current in-memory list of all players.
+     */
     fun getAllPlayers() : List<Player>{
         return allPlayers
     }
 
-    /** using a json file as list of players to mock server players**/
+    /** 
+     * Reads and parses the initial list of players from the `players.json` asset file using Moshi.
+     */
     fun getPlayers() : List<Player>{
         val jsonString = runCatching {
             javaClass.classLoader?.getResourceAsStream("players.json")
@@ -47,6 +56,10 @@ class ScoreGenerator @Inject constructor(
         }.getOrNull()?: emptyList()
     }
 
+    /**
+     * Continuously generates random score updates for a random player at random time intervals (0.5s - 3s)
+     * and emits the updated player model to [_updatedPlayer].
+     */
     suspend fun startRandomScoreGenerator() {
         while (true) {
             delay(randomIntervalRangeMs.random())

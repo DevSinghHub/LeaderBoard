@@ -27,10 +27,18 @@ class LeaderBoardViewModel @Inject constructor(
         }
     }
 
+    /**
+     * Returns the [StateFlow] emitting the top 20 players list from the LeaderBoard engine.
+     */
     fun getTopPlayerList(): StateFlow<List<TopPlayerUIModel>> {
         return leaderBoard.get().topPlayerList
     }
 
+    /**
+     * Compares incoming [players] against [previousPlayers] snapshots.
+     * If a player is new or has updated score or rank, records a timestamp in [highlightedIds]
+     * to trigger a temporary UI highlight effect.
+     */
     fun updateHighlights(players: List<TopPlayerUIModel>) {
         players.forEach { player ->
             val previous = previousPlayers[player.id]
@@ -45,6 +53,9 @@ class LeaderBoardViewModel @Inject constructor(
         }
     }
 
+    /**
+     * Removes the specified [playerId] from [highlightedIds] once its highlight timer expires.
+     */
     fun clearHighlight(playerId: Int) {
         highlightedIds.remove(playerId)
     }

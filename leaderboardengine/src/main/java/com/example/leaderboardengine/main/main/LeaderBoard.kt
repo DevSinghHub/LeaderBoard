@@ -26,6 +26,10 @@ class LeaderBoard @Inject constructor(
     private val scoreMap = TreeMap<Int, MutableSet<Player>>(compareByDescending { it })
     private val playerScores = mutableMapOf<Int, Int>()
 
+    /**
+     * Bootstraps the LeaderBoard engine by launching the score generator, loading initial players,
+     * computing the initial Top 20 list, and listening for real-time score updates.
+     */
     suspend fun initialize(scope: CoroutineScope){
         scoreGenerator.get().initializeScore(scope)
         registerAllPlayers()
@@ -33,18 +37,27 @@ class LeaderBoard @Inject constructor(
         startPlayerScoreListener()
     }
 
+    /**
+     * Registers all players provided by the [ScoreGenerator] into the internal data structures.
+     */
     fun registerAllPlayers(){
         scoreGenerator.get().getAllPlayers().forEach {
             registerPlayer(it)
         }
     }
 
+    /**
+     * Registers a single [player] into the score-bucketed [scoreMap] and updates the [playerScores] lookup map.
+     */
     fun registerPlayer(player: Player) {
         scoreMap.getOrPut(player.points) { mutableSetOf() }.add(player)
         playerScores[player.playerId] = player.points
     }
 
-
+    /**
+     * Updates an existing player's score by removing them from their previous score bucket
+     * in [scoreMap] and adding them to the new bucket corresponding to [updatedPlayer.points].
+     */
     fun updateScore(updatedPlayer: Player) {
         val oldPoints = playerScores[updatedPlayer.playerId]
         if (oldPoints != null) {
@@ -55,6 +68,10 @@ class LeaderBoard @Inject constructor(
         playerScores[updatedPlayer.playerId] = updatedPlayer.points
     }
 
+    /**
+     * Computes the top 20 players based on descending scores, assigns dense ranks (with tie-handling),
+     * and emits the resulting list to [_topPlayerList].
+     */
     suspend fun getTop20(){
         val result = mutableListOf<TopPlayerUIModel>()
         var rank = 1
@@ -69,6 +86,10 @@ class LeaderBoard @Inject constructor(
         _topPlayerList.emit(result)
     }
 
+    /**
+     * Listens for real-time player score updates emitted by [ScoreGenerator], updates internal
+     * leaderboard state, and recalculates the top 20 rankings.
+     */
     private suspend fun startPlayerScoreListener() {
         scoreGenerator.get().updatedPlayer.collect { updatedPlayer ->
             updatedPlayer?.let {
