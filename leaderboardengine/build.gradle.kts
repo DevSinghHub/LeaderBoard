@@ -39,4 +39,6 @@ dependencies {
     ksp(libs.hilt.android.compiler)
     implementation(libs.coroutines.core)
     implementation(libs.coroutines.android)
+    implementation(libs.coroutine.test)
+    implementation(libs.mockk)
 }
